@@ -33,7 +33,7 @@ model usuarios {
 model Roles {
   idRol  Int      @id @default(autoincrement())
   nomRol String
-  usuarios Usuario[]
+  usuarios usuarios[]
 }
 
 
