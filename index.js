@@ -15,6 +15,11 @@ app.use(express.json({ limit: "10mb" })); // Para fotos en base64
 // Rutas
 app.use("/api/auth", authRoutes);
 
+// Endpoint de prueba
+app.get("/api/auth/ping", (req, res) => {
+  res.json({ message: "Backend conectado 🚀" });
+});
+
 // Iniciar servidor
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, async () => {
