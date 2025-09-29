@@ -1,39 +1,122 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-
-// --- Generador del cliente de Prisma ---
 generator client {
   provider = "prisma-client-js"
 }
 
-// --- Conexión a la base de datos ---
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-// --- MODELOS ---
-model usuarios {
-  idUsuario             Int      @id @default(autoincrement())
-  nomUsuario            String
-  docUsuario            String   @unique
-  emaUsuario            String   @unique
-  pasUsuario            String
-  rol_idUsuario         Int      @default(2) // Usuario normal por defecto
-  fecha_creacionUsuario DateTime @default(now())
-
-  rol Roles @relation(fields: [rol_idUsuario], references: [idRol])
-}
-
-
 model Roles {
-  idRol  Int      @id @default(autoincrement())
-  nomRol String
-  usuarios usuarios[]
+  idRol    Int          @id @default(autoincrement())
+  nomRol   Roles_nomRol
+  Usuarios Usuarios[]
 }
 
+model Accesos {
+  idAcceso     Int            @id @default(autoincrement())
+  bicicleta_id Int
+  fotoEntrada  String         @db.VarChar(255)
+  fotoSalida   String?        @db.VarChar(255)
+  fechaEntrada DateTime       @default(now())
+  fechaSalida  DateTime?
+  validadoPor  Int?
+  estado       Accesos_estado @default(DENTRO)
+  Bicicletas   Bicicletas     @relation(fields: [bicicleta_id], references: [idBicicleta])
+  Usuarios     Usuarios?      @relation(fields: [validadoPor], references: [idUsuario])
 
+  @@index([bicicleta_id], map: "Accesos_bicicleta_id_fkey")
+  @@index([validadoPor], map: "Accesos_validadoPor_fkey")
+}
+
+model Bicicletas {
+  idBicicleta           Int               @id @default(autoincrement())
+  manilla_id            Int
+  fotoEntrada           String            @db.VarChar(255)
+  vectorCaracteristicas Json?
+  fechaEntrada          DateTime          @default(now())
+  fechaSalida           DateTime?
+  estado                Bicicletas_estado @default(DENTRO)
+  Accesos               Accesos[]
+  Manillas              Manillas          @relation(fields: [manilla_id], references: [idManilla])
+
+  @@index([manilla_id], map: "Bicicletas_manilla_id_fkey")
+}
+
+model Manillas {
+  idManilla  Int             @id @default(autoincrement())
+  codigo     String          @unique @db.VarChar(50)
+  estado     Manillas_estado @default(LIBRE)
+  Bicicletas Bicicletas[]
+  Vehiculos  Vehiculos[]
+}
+
+model Usuarios {
+  idUsuario             Int                    @id @default(autoincrement())
+  nomUsuario            String                 @db.VarChar(60)
+  apeUsuario            String                 @db.VarChar(60)
+  tipdocUsuario         Usuarios_tipdocUsuario
+  docUsuario            String                 @unique @db.VarChar(15)
+  emaUsuario            String                 @unique @db.VarChar(100)
+  paswUsuario           String                 @db.VarChar(250)
+  rol_idUsuario         Int                    @default(3)
+  fecha_creacionUsuario DateTime               @default(now())
+  Accesos               Accesos[]
+  Roles                 Roles                  @relation(fields: [rol_idUsuario], references: [idRol])
+
+  @@index([rol_idUsuario], map: "Usuarios_rol_idUsuario_fkey")
+}
+
+model Vehiculos {
+  idVehiculo            Int              @id @default(autoincrement())
+  tipo                  Vehiculos_tipo
+  placa                 String?          @unique @db.VarChar(15)
+  manilla_id            Int
+  fotoEntrada           String           @db.VarChar(255)
+  vectorCaracteristicas Json?
+  fechaEntrada          DateTime         @default(now())
+  fechaSalida           DateTime?
+  estado                Vehiculos_estado @default(DENTRO)
+  Manillas              Manillas         @relation(fields: [manilla_id], references: [idManilla])
+
+  @@index([manilla_id], map: "Vehiculos_manilla_id_fkey")
+}
+
+enum Roles_nomRol {
+  SUPERADMIN
+  ADMINISTRADOR
+  USUARIO
+}
+
+enum Vehiculos_tipo {
+  BICICLETA
+  MOTO
+  CARRO
+}
+
+enum Manillas_estado {
+  LIBRE
+  ASIGNADA
+}
+
+enum Usuarios_tipdocUsuario {
+  TI
+  CC
+  PS
+}
+
+enum Bicicletas_estado {
+  DENTRO
+  FUERA
+}
+
+enum Accesos_estado {
+  DENTRO
+  FUERA
+  EN_REVISION
+}
+
+enum Vehiculos_estado {
+  DENTRO
+  FUERA
+}
