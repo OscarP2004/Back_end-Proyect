@@ -58,7 +58,7 @@ model Usuarios {
   tipdocUsuario         Usuarios_tipdocUsuario
   docUsuario            String                 @unique @db.VarChar(15)
   emaUsuario            String                 @unique @db.VarChar(100)
-  paswUsuario           String                 @db.VarChar(250)
+  pasUsuario           String                 @db.VarChar(250)
   rol_idUsuario         Int                    @default(3)
   fecha_creacionUsuario DateTime               @default(now())
   Accesos               Accesos[]
