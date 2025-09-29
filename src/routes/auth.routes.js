@@ -6,14 +6,14 @@ import bcrypt from "bcryptjs";
 const router = Router();
 const prisma = new PrismaClient();
 
-console.log("Prisma client keys:", Object.keys(prisma));
-console.log("Has 'usuarios' model?:", typeof prisma.usuarios !== "undefined");
-
+/** Helper: normalizar string */
 function normalizeString(v) {
   return typeof v === "string" ? v.trim() : v;
 }
 
-/** Registro */
+/**
+ * Registro
+ */
 router.post("/register", async (req, res) => {
   try {
     console.log("➡️ /register request body:", req.body);
@@ -23,17 +23,12 @@ router.post("/register", async (req, res) => {
     const role = req.body.role;
     const email = normalizeString(req.body.email)?.toLowerCase();
     const password = req.body.password;
-    const photo = req.body.photo ?? null;
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: "name, email y password son obligatorios" });
     }
 
-    if (!prisma.usuarios) {
-      console.error("Prisma model 'usuarios' no disponible. Modelos:", Object.keys(prisma));
-      return res.status(500).json({ message: "Prisma model 'usuarios' no disponible" });
-    }
-
+    // Validar duplicados
     const existingEmail = await prisma.usuarios.findUnique({ where: { emaUsuario: email } });
     if (existingEmail) return res.status(400).json({ message: "El correo ya está registrado" });
 
@@ -53,7 +48,7 @@ router.post("/register", async (req, res) => {
         nomUsuario: name,
         docUsuario: document || "",
         emaUsuario: email,
-        pasUsuario: hashedPassword, // <-- USAR pasUsuario
+        pasUsuario: hashedPassword, // 👈 Usamos SOLO pasUsuario
         rol_idUsuario,
       },
     });
@@ -65,7 +60,9 @@ router.post("/register", async (req, res) => {
   }
 });
 
-/** Login */
+/**
+ * Login
+ */
 router.post("/login", async (req, res) => {
   try {
     console.log("➡️ /login request body RAW:", req.body);
@@ -74,20 +71,16 @@ router.post("/login", async (req, res) => {
     const password = req.body.password;
     if (!email || !password) return res.status(400).json({ message: "email y password son obligatorios" });
 
-    if (!prisma.usuarios) {
-      console.error("Prisma model 'usuarios' no disponible. Modelos:", Object.keys(prisma));
-      return res.status(500).json({ message: "Prisma model 'usuarios' no disponible" });
-    }
+    const user = await prisma.usuarios.findUnique({
+      where: { emaUsuario: email },
+    });
 
-    const user = await prisma.usuarios.findUnique({ where: { emaUsuario: email } });
-
-    console.log("🔎 /login user found?", !!user, user ? { id: user.idUsuario, emaUsuario: user.emaUsuario } : null);
+    console.log("🔎 /login user found?", !!user);
 
     if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
-    // <-- USAR exactamente pasUsuario
-    const dbPassword = user.pasUsuario ?? null;
-    const isPasswordValid = dbPassword ? await bcrypt.compare(password, dbPassword) : false;
+    // ✅ Usamos SOLO pasUsuario
+    const isPasswordValid = await bcrypt.compare(password, user.pasUsuario);
 
     console.log("🔐 Password válida?", isPasswordValid);
 
