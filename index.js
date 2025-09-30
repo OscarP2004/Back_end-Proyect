@@ -15,12 +15,9 @@ const allowedOrigins = [
   "http://127.0.0.1:3000",
 ];
 app.use(cors({
-  origin(origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    // en dev permitimos, cambiar en prod
-    return callback(null, true);
-  },
+  origin: ["*"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 }));
 
