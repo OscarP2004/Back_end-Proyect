@@ -9,41 +9,56 @@ dotenv.config();
 const app = express();
 const prisma = new PrismaClient();
 
-// CORS (ajusta si añades dominio de frontend desplegado)
+// ✅ Lista de orígenes permitidos (agregarás el de Vercel después)
 const allowedOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
+  "https://tu-dominio-frontend.com" // <-- reemplazar cuando despliegues en Vercel
 ];
-app.use(cors({
-  origin: ["*"],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-}));
 
-app.use(express.json({ limit: "10mb" }));
-
-// Logging simple de peticiones
+// ✅ Logger para ver desde qué ORIGIN llegan las peticiones
 app.use((req, res, next) => {
-  console.log(new Date().toISOString(), req.method, req.url);
+  console.log("🔎 CORS-Origin recibido:", req.headers.origin);
   next();
 });
 
-// Rutas
+// ✅ Configuración robusta de CORS
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      console.warn("❌ Bloqueado por CORS:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
+
+// ✅ Preflight (OPTIONS) habilitado
+app.options("*", cors());
+
+// ✅ Body parser
+app.use(express.json({ limit: "10mb" }));
+
+// ✅ Rutas
 app.use("/api/auth", authRoutes);
 
-// Endpoint de prueba
+// ✅ Endpoint de prueba
 app.get("/api/auth/ping", (req, res) => {
   res.json({ message: "Backend conectado 🚀" });
 });
 
-// Error handler básico
+// ✅ Manejador de errores global
 app.use((err, req, res, next) => {
   console.error("Unhandled Error:", err);
   res.status(500).json({ message: "Internal Server Error" });
 });
 
-// START: conecta a la DB primero (fallar rápido si DB inaccesible)
+// ✅ Inicio del servidor
 async function start() {
   try {
     console.log("🔌 Intentando conectar a la base de datos...");
@@ -51,23 +66,15 @@ async function start() {
     console.log("✅ Conectado a MySQL con Prisma");
   } catch (err) {
     console.error("❌ Error al conectar a MySQL:", err);
-    // si no puedes conectar a la DB en producción, mejor salir con código != 0
     process.exit(1);
   }
 
-  const portEnv = process.env.PORT;
-  const PORT = portEnv ? Number(portEnv) : 5000;
-  if (!Number.isFinite(PORT)) {
-    console.error("❌ PORT inválido:", process.env.PORT);
-    process.exit(1);
-  }
-
+  const PORT = Number(process.env.PORT) || 5000;
   app.listen(PORT, () => {
     console.log(`🚀 Servidor corriendo en http://0.0.0.0:${PORT}`);
   });
 }
 
-// Mejores logs para errores no capturados
 process.on("uncaughtException", (err) => {
   console.error("uncaughtException:", err);
   process.exit(1);
