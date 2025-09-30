@@ -54,7 +54,6 @@ model Manillas {
 model Usuarios {
   idUsuario             Int                    @id @default(autoincrement())
   nomUsuario            String                 @db.VarChar(60)
-  tipdocUsuario         Usuarios_tipdocUsuario
   docUsuario            String                 @unique @db.VarChar(15)
   emaUsuario            String                 @unique @db.VarChar(100)
   pasUsuario           String                 @db.VarChar(250)
@@ -96,12 +95,6 @@ enum Vehiculos_tipo {
 enum Manillas_estado {
   LIBRE
   ASIGNADA
-}
-
-enum Usuarios_tipdocUsuario {
-  TI
-  CC
-  PS
 }
 
 enum Bicicletas_estado {

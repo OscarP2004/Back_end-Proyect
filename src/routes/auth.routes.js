@@ -15,6 +15,7 @@ function normalizeString(v) {
  * Registro
  */
 router.post("/register", async (req, res) => {
+  console.log("📦 BODY RECIBIDO EN /register:", req.body);
   try {
     console.log("➡️ /register request body:", req.body);
 
